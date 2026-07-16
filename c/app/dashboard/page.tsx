@@ -18,7 +18,7 @@ export default function AppDashboard() {
   const [user, setUser] = useState('');
   const [pass, setPass] = useState('');
   const [loading, setLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState<string | null>(null); 
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   
   type PendingReq = { phone_number: string; mac_address: string };
   const [pending, setPending] = useState<PendingReq[]>([]);
@@ -32,15 +32,14 @@ export default function AppDashboard() {
   const [blacklistedMacs, setBlacklistedMacs] = useState<string[]>([]);
   const [unblacklistTarget, setUnblacklistTarget] = useState('');
 
-  // Auto-Sync Polling Hook
   useEffect(() => {
     if (!token) return;
     const syncInterval = setInterval(() => {
       fetch(`${API_BASE_URL}/api/employee/pending`, { headers: { 'Authorization': `Bearer ${token}` } })
         .then(res => res.ok ? res.json() : [])
         .then(data => setPending(data))
-        .catch(() => console.debug("Sync transient failure. Re-polling..."));
-    }, 3000);
+        .catch(() => console.debug("Sync transient trace dropped. Re-polling..."));
+    }, 4000); 
     return () => clearInterval(syncInterval);
   }, [token]);
 
@@ -49,16 +48,11 @@ export default function AppDashboard() {
     if (loading) return;
     setLoading(true);
     try {
-      const details = new URLSearchParams();
-      details.append('username', user);
-      details.append('password', pass);
-
       const res = await fetch(`${API_BASE_URL}/api/auth/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: details
+        body: new URLSearchParams({ username: user, password: pass })
       });
-
       if (res.ok) {
         const data = await res.json();
         setToken(data.access_token);
@@ -105,8 +99,8 @@ export default function AppDashboard() {
   };
 
   const executeVoucherApproval = async (phone: string, tierKey: string, routerInstance: string) => {
-    if (actionLoading) return; 
-    setActionLoading(phone); 
+    if (actionLoading) return;
+    setActionLoading(phone);
     
     try {
       const res = await fetch(`${API_BASE_URL}/api/employee/approve`, {
@@ -116,8 +110,8 @@ export default function AppDashboard() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.tunnel_online && data.status === "approved") {
-          alert(`Approval complete. Device authorized inside live cache tables successfully.`);
+        if (data.status === "approved") {
+          alert(`Approval logged! Device bypassed securely.`);
         } else {
           alert(`⚠️ ROUTER OFFLINE FALLBACK MODE\n\nUser MAC: ${data.target_mac}\nVoucher ID: ${data.voucher_username}\nPIN: ${data.voucher_password}`);
         }
@@ -126,7 +120,7 @@ export default function AppDashboard() {
     } catch {
       alert('Network transmission failed during clearance.');
     } finally {
-      setActionLoading(null); 
+      setActionLoading(null);
     }
   };
 
@@ -209,10 +203,10 @@ export default function AppDashboard() {
                     <td style={admStyles.td}><strong>{req.phone_number}</strong></td>
                     <td style={admStyles.td}><code style={{ background: '#f1f5f9', padding: '3px 6px', borderRadius: '4px', fontSize: '13px' }}>{req.mac_address}</code></td>
                     <td style={{ ...admStyles.td, display: 'flex', gap: '8px' }}>
-                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_1', 'mikrotik1')} style={{ ...admStyles.badgeBtn, background: '#10b981', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? 'Approving...' : '1hr / 1 Dev (M1)'}</button>
-                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_2', 'mikrotik1')} style={{ ...admStyles.badgeBtn, background: '#3b82f6', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '2hr / 2 Devs (M1)'}</button>
-                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_3', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#6366f1', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '12hr / 3 Devs (M2)'}</button>
-                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_4', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#a855f7', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '30d / 4 Devs (M2)'}</button>
+                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_1', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#10b981', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? 'Clearing...' : '1hr / Single User'}</button>
+                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_2', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#3b82f6', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '2hr / 1 Companion'}</button>
+                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_3', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#6366f1', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '12hr / 2 Companions'}</button>
+                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_4', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#a855f7', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '30d / 3 Companions'}</button>
                     </td>
                   </tr>
                 );

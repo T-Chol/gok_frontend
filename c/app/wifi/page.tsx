@@ -1,11 +1,10 @@
-// c/app/admin/page.tsx
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-// Remove the trailing slash from the fallback string completely
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 function CaptivePortalContent() {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<'request' | 'login'>('request');
@@ -13,7 +12,7 @@ function CaptivePortalContent() {
   const [mac, setMac] = useState('');
   const [ip, setIp] = useState('');
   const [dst, setDst] = useState('');
-  const [loginTarget, setLoginTarget] = useState('http://10.50.0.1/login'); 
+  const [loginTarget, setLoginTarget] = useState('http://192.168.30.1/login'); 
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [username, setUsername] = useState('');
@@ -32,15 +31,16 @@ function CaptivePortalContent() {
     if (urlIp) setIp(urlIp);
     if (urlDst) setDst(urlDst);
     
-    const privateIpRegex = /^https?:\/\/(10\.[0-9]+\.[0-9]+\.[0-9]+|192\.168\.[0-9]+\.[0-9]+|172\.(1[6-9]|2[0-9]|3[0-1])\.[0-9]+\.[0-9]+)(\/|$)/;
-    if (urlLoginOnly && privateIpRegex.test(urlLoginOnly)) {
+    if (urlLoginOnly) {
       setLoginTarget(urlLoginOnly);
+    } else if (urlIp.startsWith('192.168.40.')) {
+      setLoginTarget('http://192.168.40.1/login');
     }
   }, [searchParams]);
 
   const handleRequestAccess = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return; // CLICK PROTECTION ANTI-SPAM GUARD
+    if (loading) return;
     setLoading(true);
     setMessage(null);
 
@@ -64,7 +64,7 @@ function CaptivePortalContent() {
       });
 
       if (response.ok) {
-        setMessage({ type: 'success', text: 'Access request queued successfully! Please approach the counter to verify your payment.' });
+        setMessage({ type: 'success', text: 'Access request queued successfully! Please approach the counter to complete your clearance payment.' });
         setPhoneNumber('');
       } else {
         const errorData = await response.json();
@@ -73,7 +73,7 @@ function CaptivePortalContent() {
     } catch (err) {
       setMessage({ type: 'error', text: 'Network error. The local authentication gateway is offline.' });
     } finally {
-      setLoading(false); // RELEASE LOCKOUT
+      setLoading(false);
     }
   };
 
