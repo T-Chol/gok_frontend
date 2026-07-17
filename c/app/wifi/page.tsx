@@ -22,6 +22,7 @@ function CaptivePortalContent() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Parse template parameters safely on initial gateway captive frame intercept
   useEffect(() => {
     const urlMac = searchParams.get('mac') || '';
     const urlIp = searchParams.get('ip') || '';
@@ -32,16 +33,15 @@ function CaptivePortalContent() {
     if (urlIp) setIp(urlIp);
     if (urlDst) setDst(urlDst);
     
+    // NATIVE ENFORCEMENT: Follows whatever redirect gateway intercept parameters hit the window frame
     if (urlLoginOnly) {
       setLoginTarget(urlLoginOnly);
     } else if (urlIp.startsWith('192.168.40.')) {
       setLoginTarget('http://192.168.40.1/login');
-    } else if (urlIp.startsWith('192.168.30.')) {
-      setLoginTarget('http://192.168.30.1/login');
     }
   }, [searchParams]);
 
-  // FIXED POLLING MATRIX: Monitors explicit state changes until "approved" keys appear
+  // SECURE CLEARANCE POLLING POOL HOOK
   useEffect(() => {
     if (!submittedPhone) return;
 
@@ -55,7 +55,7 @@ function CaptivePortalContent() {
             (req: { phone_number: string }) => req.phone_number === submittedPhone
           );
 
-          // If the matching record contains credentials or status is explicitly approved, log them in!
+          // Trigger zero-friction form auto-submit ONLY when specific vouchers match perfectly
           if (matchingReq && (matchingReq.status === "approved" || matchingReq.voucher_username)) {
             clearInterval(autoClearanceChecker);
             setMessage({ type: 'success', text: 'Payment cleared! Initializing secure auto-login handshake...' });
@@ -73,7 +73,7 @@ function CaptivePortalContent() {
           }
         }
       } catch (err) {
-        console.debug("Auto-clearance loop re-establishing active link traces...");
+        console.debug("Auto-clearance loop tracing connectivity pools...");
       }
     }, 3000);
 
