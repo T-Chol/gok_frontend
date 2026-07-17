@@ -1,3 +1,4 @@
+// c/app/wifi/page.tsx
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -12,15 +13,17 @@ function CaptivePortalContent() {
   const [mac, setMac] = useState('');
   const [ip, setIp] = useState('');
   const [dst, setDst] = useState('');
-  const [loginTarget, setLoginTarget] = useState('http://192.168.30.1/login'); 
+  const [loginTarget, setLoginTarget] = useState('http://192.168.40.1/login'); 
 
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [submittedPhone, setSubmittedPhone] = useState<string | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Parse MikroTik template variables on initial redirect hook load
   useEffect(() => {
     const urlMac = searchParams.get('mac') || '';
     const urlIp = searchParams.get('ip') || '';
@@ -35,8 +38,81 @@ function CaptivePortalContent() {
       setLoginTarget(urlLoginOnly);
     } else if (urlIp.startsWith('192.168.40.')) {
       setLoginTarget('http://192.168.40.1/login');
+    } else if (urlIp.startsWith('192.168.30.')) {
+      setLoginTarget('http://192.168.30.1/login');
     }
   }, [searchParams]);
+
+  // AUTOMATED BACKGROUND INTERRUPT POLLING ENGINE:
+  // Runs every 3 seconds ONLY after a user submits their phone number.
+  // Checks the live sales registry. The exact second staff approves the transaction,
+  // it hijacks the UI flow, builds an encrypted login payload, and auto-submits to the router.
+  useEffect(() => {
+    if (!submittedPhone) return;
+
+    const autoClearanceChecker = setInterval(async () => {
+      try {
+        // Fetch current active registrations status from master runtime queue arrays
+        const res = await fetch(`${API_BASE_URL}/api/employee/pending`);
+        if (res.ok) {
+          const pendingList = await res.json();
+          const stillPending = pendingList.some(
+            (req: { phone_number: string }) => req.phone_number === submittedPhone
+          );
+
+          // If the phone number is gone from the pending queue, it means staff approved it!
+          if (!stillPending) {
+            clearInterval(autoClearanceChecker);
+            setMessage({ type: 'success', text: 'Payment cleared! Initializing secure auto-login handshake...' });
+            
+            // Allow state to serialize for 1.5 seconds, then fire the cookie injection sequence
+            setTimeout(() => {
+              executeInvisibleRouterPost(mac, mac);
+            }, 1500);
+          }
+        }
+      } catch (err) {
+        console.debug("Auto-clearance link re-establishing link traces...");
+      }
+    }, 3000);
+
+    return () => clearInterval(autoClearanceChecker);
+  }, [submittedPhone, mac]);
+
+  // Helper macro function to execute the invisible form payload dispatch loop
+  const executeInvisibleRouterPost = (userKey: string, passKey: string) => {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = loginTarget; // Directs straight to the local MikroTik interface gateway gateway IP
+
+    // Pass essential authentication variables expected by standard hotame arrays
+    const usernameInput = document.createElement('input');
+    usernameInput.type = 'hidden';
+    usernameInput.name = 'username';
+    usernameInput.value = userKey;
+    form.appendChild(usernameInput);
+
+    const passwordInput = document.createElement('input');
+    passwordInput.type = 'hidden';
+    passwordInput.name = 'password';
+    passwordInput.value = passKey;
+    form.appendChild(passwordInput);
+
+    const dstInput = document.createElement('input');
+    dstInput.type = 'hidden';
+    dstInput.name = 'dst';
+    dstInput.value = dst || 'https://www.google.com';
+    form.appendChild(dstInput);
+
+    const popupInput = document.createElement('input');
+    popupInput.type = 'hidden';
+    popupInput.name = 'popup';
+    popupInput.value = 'true';
+    form.appendChild(popupInput);
+
+    document.body.appendChild(form);
+    form.submit(); // Dispatches variables natively, dropping the long-term tracking cookie instantly!
+  };
 
   const handleRequestAccess = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +141,7 @@ function CaptivePortalContent() {
 
       if (response.ok) {
         setMessage({ type: 'success', text: 'Access request queued successfully! Please approach the counter to complete your clearance payment.' });
+        setSubmittedPhone(cleanedPhone); // Arms the background polling hook instantly
         setPhoneNumber('');
       } else {
         const errorData = await response.json();
@@ -104,10 +181,14 @@ function CaptivePortalContent() {
         {activeTab === 'request' && (
           <form onSubmit={handleRequestAccess}>
             <label style={styles.label}>Your Phone Number</label>
-            <input type="tel" placeholder="e.g., 0912345678" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} style={styles.input} disabled={loading} required />
-            <span style={styles.infoTxt}>Submit your phone number, then head to the counter to complete cash payment.</span>
-            <button type="submit" style={{ ...styles.button, opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }} disabled={loading}>
-              {loading ? 'Processing Queue...' : 'Submit Access Request'}
+            <input type="tel" placeholder="e.g., 0912345678" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} style={styles.input} disabled={loading || !!submittedPhone} required />
+            <span style={styles.infoTxt}>
+              {submittedPhone 
+                ? '⏳ Waiting for staff payment validation... Keep this browser page open to bypass automatically.' 
+                : 'Submit your phone number, then head to the counter to complete cash payment.'}
+            </span>
+            <button type="submit" style={{ ...styles.button, opacity: (loading || !!submittedPhone) ? 0.6 : 1, cursor: (loading || !!submittedPhone) ? 'not-allowed' : 'pointer' }} disabled={loading || !!submittedPhone}>
+              {submittedPhone ? 'Waiting for Approval...' : loading ? 'Processing Queue...' : 'Submit Access Request'}
             </button>
           </form>
         )}
