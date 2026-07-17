@@ -1,4 +1,3 @@
-// c/app/wifi/page.tsx
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -23,7 +22,7 @@ function CaptivePortalContent() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Parse MikroTik template variables on initial redirect hook load
+  // Parse query arguments provided by the initial MikroTik redirect string
   useEffect(() => {
     const urlMac = searchParams.get('mac') || '';
     const urlIp = searchParams.get('ip') || '';
@@ -43,31 +42,35 @@ function CaptivePortalContent() {
     }
   }, [searchParams]);
 
-  // AUTOMATED BACKGROUND INTERRUPT POLLING ENGINE:
-  // Runs every 3 seconds ONLY after a user submits their phone number.
-  // Checks the live sales registry. The exact second staff approves the transaction,
-  // it hijacks the UI flow, builds an encrypted login payload, and auto-submits to the router.
+  // AUTOMATED BACKGROUND AUTO-LOGIN HANDSHAKE:
+  // Polls the queue unprotected channel. The moment it detects staff approval, 
+  // it reads the generated GOK voucher codes out of the response matrix,
+  // and injects them invisibly into an automated form dispatch loop.
   useEffect(() => {
     if (!submittedPhone) return;
 
     const autoClearanceChecker = setInterval(async () => {
       try {
-        // Fetch current active registrations status from master runtime queue arrays
         const res = await fetch(`${API_BASE_URL}/api/employee/pending`);
         if (res.ok) {
           const pendingList = await res.json();
-          const stillPending = pendingList.some(
+          
+          // Locate our specific matching record structure inside the array queue
+          const matchingReq = pendingList.find(
             (req: { phone_number: string }) => req.phone_number === submittedPhone
           );
 
-          // If the phone number is gone from the pending queue, it means staff approved it!
-          if (!stillPending) {
+          // If our record has disappeared OR holds completed credential payload keys, execute!
+          if (!matchingReq || matchingReq.voucher_username) {
             clearInterval(autoClearanceChecker);
             setMessage({ type: 'success', text: 'Payment cleared! Initializing secure auto-login handshake...' });
             
-            // Allow state to serialize for 1.5 seconds, then fire the cookie injection sequence
+            // Fall back gracefully to mac credentials only if backend transmission glitched
+            const finalUser = matchingReq?.voucher_username || mac;
+            const finalPass = matchingReq?.voucher_password || mac;
+
             setTimeout(() => {
-              executeInvisibleRouterPost(mac, mac);
+              executeInvisibleRouterPost(finalUser, finalPass);
             }, 1500);
           }
         }
@@ -79,13 +82,12 @@ function CaptivePortalContent() {
     return () => clearInterval(autoClearanceChecker);
   }, [submittedPhone, mac]);
 
-  // Helper macro function to execute the invisible form payload dispatch loop
+  // Dynamic DOM node macro factory to post directly back into the gateway's active hot-ports
   const executeInvisibleRouterPost = (userKey: string, passKey: string) => {
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = loginTarget; // Directs straight to the local MikroTik interface gateway gateway IP
+    form.action = loginTarget; 
 
-    // Pass essential authentication variables expected by standard hotame arrays
     const usernameInput = document.createElement('input');
     usernameInput.type = 'hidden';
     usernameInput.name = 'username';
@@ -111,7 +113,7 @@ function CaptivePortalContent() {
     form.appendChild(popupInput);
 
     document.body.appendChild(form);
-    form.submit(); // Dispatches variables natively, dropping the long-term tracking cookie instantly!
+    form.submit(); // Natively drops tracking cookies, clearing all device randomization anomalies!
   };
 
   const handleRequestAccess = async (e: React.FormEvent) => {
@@ -141,7 +143,7 @@ function CaptivePortalContent() {
 
       if (response.ok) {
         setMessage({ type: 'success', text: 'Access request queued successfully! Please approach the counter to complete your clearance payment.' });
-        setSubmittedPhone(cleanedPhone); // Arms the background polling hook instantly
+        setSubmittedPhone(cleanedPhone); // Arms the background polling hook loop immediately
         setPhoneNumber('');
       } else {
         const errorData = await response.json();
