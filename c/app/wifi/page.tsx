@@ -22,7 +22,6 @@ function CaptivePortalContent() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Parse query arguments provided by the initial MikroTik redirect string
   useEffect(() => {
     const urlMac = searchParams.get('mac') || '';
     const urlIp = searchParams.get('ip') || '';
@@ -42,10 +41,7 @@ function CaptivePortalContent() {
     }
   }, [searchParams]);
 
-  // AUTOMATED BACKGROUND AUTO-LOGIN HANDSHAKE:
-  // Polls the queue unprotected channel. The moment it detects staff approval, 
-  // it reads the generated GOK voucher codes out of the response matrix,
-  // and injects them invisibly into an automated form dispatch loop.
+  // FIXED POLLING MATRIX: Monitors explicit state changes until "approved" keys appear
   useEffect(() => {
     if (!submittedPhone) return;
 
@@ -55,34 +51,35 @@ function CaptivePortalContent() {
         if (res.ok) {
           const pendingList = await res.json();
           
-          // Locate our specific matching record structure inside the array queue
           const matchingReq = pendingList.find(
             (req: { phone_number: string }) => req.phone_number === submittedPhone
           );
 
-          // If our record has disappeared OR holds completed credential payload keys, execute!
-          if (!matchingReq || matchingReq.voucher_username) {
+          // If the matching record contains credentials or status is explicitly approved, log them in!
+          if (matchingReq && (matchingReq.status === "approved" || matchingReq.voucher_username)) {
             clearInterval(autoClearanceChecker);
             setMessage({ type: 'success', text: 'Payment cleared! Initializing secure auto-login handshake...' });
             
-            // Fall back gracefully to mac credentials only if backend transmission glitched
-            const finalUser = matchingReq?.voucher_username || mac;
-            const finalPass = matchingReq?.voucher_password || mac;
+            const finalUser = matchingReq.voucher_username;
+            const finalPass = matchingReq.voucher_password;
 
-            setTimeout(() => {
-              executeInvisibleRouterPost(finalUser, finalPass);
-            }, 1500);
+            if (finalUser && finalPass) {
+              setTimeout(() => {
+                executeInvisibleRouterPost(finalUser, finalPass);
+              }, 1500);
+            } else {
+              setMessage({ type: 'error', text: 'Authorization keys formatting exception. Please input texted credentials manually.' });
+            }
           }
         }
       } catch (err) {
-        console.debug("Auto-clearance link re-establishing link traces...");
+        console.debug("Auto-clearance loop re-establishing active link traces...");
       }
     }, 3000);
 
     return () => clearInterval(autoClearanceChecker);
   }, [submittedPhone, mac]);
 
-  // Dynamic DOM node macro factory to post directly back into the gateway's active hot-ports
   const executeInvisibleRouterPost = (userKey: string, passKey: string) => {
     const form = document.createElement('form');
     form.method = 'POST';
@@ -113,7 +110,7 @@ function CaptivePortalContent() {
     form.appendChild(popupInput);
 
     document.body.appendChild(form);
-    form.submit(); // Natively drops tracking cookies, clearing all device randomization anomalies!
+    form.submit(); 
   };
 
   const handleRequestAccess = async (e: React.FormEvent) => {
@@ -143,7 +140,7 @@ function CaptivePortalContent() {
 
       if (response.ok) {
         setMessage({ type: 'success', text: 'Access request queued successfully! Please approach the counter to complete your clearance payment.' });
-        setSubmittedPhone(cleanedPhone); // Arms the background polling hook loop immediately
+        setSubmittedPhone(cleanedPhone); 
         setPhoneNumber('');
       } else {
         const errorData = await response.json();
