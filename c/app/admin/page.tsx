@@ -120,13 +120,43 @@ export default function AppDashboard() {
     }
   };
 
+  // c/app/admin/page.tsx additions for manual bypass
+  const handleManualBypass = async (mac: string, phoneInput: string) => {
+    if (actionLoading) return;
+    setActionLoading(mac);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/manual-bypass`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ 
+          phone_number: phoneInput || "+211000000000", 
+          mac_address: mac 
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.tunnel_online) {
+          alert(`Successfully bypassed and labeled device: ${data.label}`);
+        } else {
+          alert(`⚠️ Offline Fallback Mode: Manual rule prepared for MAC ${mac}`);
+        }
+      } else {
+        alert('Failed to execute manual bypass on router.');
+      }
+    } catch {
+      alert('Network transmission failed during manual override.');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const executeVoucherApproval = async (phone: string, mac: string, tierKey: string, routerInstance: string) => {
     if (actionLoading) return; 
     setActionLoading(phone || mac); 
     
     try {
-      // If triggered from active leases without a pending portal request, inject dummy pending request first or approve directly
-      // Here we push to pending structure via backend approval endpoint directly using MAC & Phone
       const res = await fetch(`${API_BASE_URL}/api/employee/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -306,10 +336,11 @@ export default function AppDashboard() {
                           style={{ padding: '6px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', width: '130px' }}
                         />
                         <button 
-                          onClick={() => executeVoucherApproval(currentPhone, client.mac_address, 'tier_2', 'mikrotik2')} 
-                          style={{ ...admStyles.badgeBtn, background: '#dc2626', cursor: 'pointer' }}
+                          disabled={!!actionLoading} 
+                          onClick={() => handleManualBypass(client.mac_address, currentPhone)} 
+                          style={{ ...admStyles.badgeBtn, background: '#dc2626', cursor: actionLoading ? 'not-allowed' : 'pointer' }}
                         >
-                          Bypass & Authorize
+                          {actionLoading === client.mac_address ? 'Bypassing...' : 'Manually Bypass & Authorize'}
                         </button>
                       </div>
                     </td>
