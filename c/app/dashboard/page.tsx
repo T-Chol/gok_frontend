@@ -127,9 +127,9 @@ export default function AppDashboard() {
 
   if (!token) {
     return (
-      <div style={{ backgroundColor: '#f8fafc', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui' }}>
-        <div style={{ maxWidth: '400px', width: '100%', padding: '32px', backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '20px', fontWeight: 700, color: '#0f172a', textAlign: 'center' }}>Staff Center Ingress</h3>
+      <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui, sans-serif', padding: '16px' }}>
+        <div style={{ maxWidth: '400px', width: '100%', padding: '32px 24px', backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: 700, color: '#0f172a', textAlign: 'center' }}>Staff Center Ingress</h3>
           <form onSubmit={triggerLogin}>
             <input type="text" placeholder="Username" value={user} onChange={e => setUser(e.target.value)} style={admStyles.inputField} required />
             <input type="password" placeholder="Password" value={pass} onChange={e => setPass(e.target.value)} style={admStyles.inputField} required />
@@ -141,54 +141,148 @@ export default function AppDashboard() {
   }
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+    <div className="dashboard-wrapper" style={{ padding: '24px 16px', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', minHeight: '100vh', boxSizing: 'border-box' }}>
+      <style jsx global>{`
+        .admin-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+          margin-bottom: 32px;
+        }
+        .form-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        .release-portal-form {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+        .vouchers-group {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        /* Responsive Breakpoint: Tablet & Up */
+        @media (min-width: 640px) {
+          .form-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          .release-portal-form {
+            flex-direction: row;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .dashboard-wrapper {
+            padding: 40px !important;
+          }
+          .admin-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+          }
+        }
+
+        /* Mobile Table Transformation */
+        @media (max-width: 767px) {
+          .responsive-table, .responsive-table tbody, .responsive-table tr, .responsive-table td {
+            display: block;
+            width: 100%;
+          }
+          .responsive-table thead {
+            display: none;
+          }
+          .responsive-table tr {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px;
+            box-sizing: border-box;
+          }
+          .responsive-table tr:last-child {
+            border-bottom: none;
+          }
+          .responsive-table td {
+            padding: 6px 0 !important;
+            border: none !important;
+          }
+          .responsive-table td::before {
+            content: attr(data-label);
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+          }
+          .vouchers-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+          }
+          .vouchers-group button {
+            width: 100%;
+            text-align: center;
+          }
+        }
+      `}</style>
+
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', borderBottom: '1px solid #e2e8f0', paddingBottom: '20px' }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '26px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>Gok Anyuak Master Operations Center</h2>
-            <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: '14px' }}>Active Session: <strong>{user}</strong> | Clearance Level: <span style={{ padding: '3px 8px', background: '#e0f2fe', color: '#0369a1', borderRadius: '4px', fontSize: '12px', fontWeight: 700 }}>{role.toUpperCase()}</span></p>
-          </div>
+        {/* Header Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', wordBreak: 'break-word' }}>
+            Gok Anyuak Master Operations Center
+          </h2>
+          <p style={{ margin: 0, color: '#64748b', fontSize: '13px', lineHeight: '1.5' }}>
+            Active Session: <strong>{user}</strong> | Clearance Level:{' '}
+            <span style={{ padding: '3px 8px', background: '#e0f2fe', color: '#0369a1', borderRadius: '4px', fontSize: '12px', fontWeight: 700, display: 'inline-block' }}>
+              {role.toUpperCase()}
+            </span>
+          </p>
         </div>
 
+        {/* Admin Controls */}
         {role === 'admin' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
-            <div style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+          <div className="admin-grid">
+            <div style={{ background: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
               <h4 style={admStyles.sectionTitle}>Global Network Speed Controls</h4>
               <form onSubmit={handleGlobalSpeedSync}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <label style={{ fontSize: '13px', fontWeight: 600 }}>Download Speed <input type="text" value={dl} onChange={e => setDl(e.target.value)} style={admStyles.inputField} /></label>
                   <label style={{ fontSize: '13px', fontWeight: 600 }}>Upload Speed <input type="text" value={ul} onChange={e => setUl(e.target.value)} style={admStyles.inputField} /></label>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div className="form-grid">
                   <label style={{ fontSize: '13px', fontWeight: 600 }}>DoS Max Requests <input type="number" value={dosLimit} onChange={e => setDosLimit(Number(e.target.value))} style={admStyles.inputField} /></label>
                   <label style={{ fontSize: '13px', fontWeight: 600 }}>DoS Window (Min) <input type="number" value={dosWindow} onChange={e => setDosWindow(Number(e.target.value))} style={admStyles.inputField} /></label>
                 </div>
-                <button type="submit" style={{ ...admStyles.actionBtn, background: '#dc2626' }}>Sync Profile Rules</button>
+                <button type="submit" style={{ ...admStyles.actionBtn, background: '#dc2626', width: '100%' }}>Sync Profile Rules</button>
               </form>
             </div>
 
-            <div style={{ background: '#ffffff', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ background: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
               <h4 style={admStyles.sectionTitle}>Lockout Release Portal</h4>
-              <form onSubmit={handleUnblacklist} style={{ marginBottom: '20px' }}>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <input type="text" placeholder="Phone or MAC Address Token" value={unblacklistTarget} onChange={e => setUnblacklistTarget(e.target.value)} style={{ ...admStyles.inputField, marginTop: 0, marginBottom: 0 }} required />
-                  <button type="submit" style={{ ...admStyles.actionBtn, background: '#1e3a8a', whiteSpace: 'nowrap' }}>Release Lockout</button>
-                </div>
+              <form onSubmit={handleUnblacklist} className="release-portal-form">
+                <input type="text" placeholder="Phone or MAC Address Token" value={unblacklistTarget} onChange={e => setUnblacklistTarget(e.target.value)} style={{ ...admStyles.inputField, marginTop: 0, marginBottom: 0 }} required />
+                <button type="submit" style={{ ...admStyles.actionBtn, background: '#1e3a8a', whiteSpace: 'nowrap' }}>Release Lockout</button>
               </form>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>
+              <div style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-word' }}>
                 <div><strong>Blocked Phones:</strong> {blacklistedPhones.join(', ') || 'None'}</div>
-                <div style={{ marginTop: '4px' }}><strong>Blocked MACs:</strong> {blacklistedMacs.join(', ') || 'None'}</div>
+                <div style={{ marginTop: '6px' }}><strong>Blocked MACs:</strong> {blacklistedMacs.join(', ') || 'None'}</div>
               </div>
             </div>
           </div>
         )}
 
+        {/* Live Queue Table */}
         <div style={{ background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0' }}>
-            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1e293b' }}>Live Active Requests (Auto-Sync Queue Matrix)</h4>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>Live Active Requests (Auto-Sync Queue Matrix)</h4>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="responsive-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
                 <th style={admStyles.th}>Phone Number</th>
@@ -201,19 +295,23 @@ export default function AppDashboard() {
                 const isThisRowBushed = actionLoading === req.phone_number;
                 return (
                   <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', opacity: actionLoading && !isThisRowBushed ? 0.5 : 1 }}>
-                    <td style={admStyles.td}><strong>{req.phone_number}</strong></td>
-                    <td style={admStyles.td}><code style={{ background: '#f1f5f9', padding: '3px 6px', borderRadius: '4px', fontSize: '13px' }}>{req.mac_address}</code></td>
-                    <td style={{ ...admStyles.td, display: 'flex', gap: '8px' }}>
-                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_1', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#10b981', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? 'Clearing...' : '1hr / Single User'}</button>
-                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_2', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#3b82f6', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '2hr / 1 Companion'}</button>
-                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_3', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#6366f1', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '12hr / 2 Companions'}</button>
-                      <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_4', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#a855f7', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '30d / 3 Companions'}</button>
+                    <td data-label="Phone Number" style={admStyles.td}><strong>{req.phone_number}</strong></td>
+                    <td data-label="Hardware Signature (MAC)" style={admStyles.td}>
+                      <code style={{ background: '#f1f5f9', padding: '3px 6px', borderRadius: '4px', fontSize: '12px', wordBreak: 'break-all' }}>{req.mac_address}</code>
+                    </td>
+                    <td data-label="Authorize Access Vouchers" style={admStyles.td}>
+                      <div className="vouchers-group">
+                        <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_1', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#10b981', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? 'Clearing...' : '1hr / Single User'}</button>
+                        <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_2', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#3b82f6', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '2hr / 1 Companion'}</button>
+                        <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_3', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#6366f1', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '12hr / 2 Companions'}</button>
+                        <button disabled={!!actionLoading} onClick={() => executeVoucherApproval(req.phone_number, 'tier_4', 'mikrotik2')} style={{ ...admStyles.badgeBtn, background: '#a855f7', cursor: actionLoading ? 'not-allowed' : 'pointer' }}>{isThisRowBushed ? '...' : '30d / 3 Companions'}</button>
+                      </div>
                     </td>
                   </tr>
                 );
               })}
               {pending.length === 0 && (
-                <tr><td colSpan={3} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>No guests currently waiting for registration clearance.</td></tr>
+                <tr><td colSpan={3} style={{ padding: '32px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>No guests currently waiting for registration clearance.</td></tr>
               )}
             </tbody>
           </table>
@@ -225,11 +323,11 @@ export default function AppDashboard() {
 }
 
 const admStyles = {
-  sectionTitle: { margin: '0 0 20px 0', fontSize: '15px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
-  inputField: { width: '100%', padding: '10px 12px', marginTop: '6px', marginBottom: '14px', border: '1px solid #cbd5e1', borderRadius: '6px', boxSizing: 'border-box' as const, fontSize: '14px' },
+  sectionTitle: { margin: '0 0 16px 0', fontSize: '14px', fontWeight: 700, color: '#1e293b', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
+  inputField: { width: '100%', padding: '10px 12px', marginTop: '4px', marginBottom: '12px', border: '1px solid #cbd5e1', borderRadius: '6px', boxSizing: 'border-box' as const, fontSize: '14px' },
   primaryBtn: { width: '100%', padding: '12px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '14px' },
   actionBtn: { color: 'white', padding: '10px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '13px' },
-  th: { padding: '14px 24px', fontSize: '13px', color: '#475569', fontWeight: 600 },
-  td: { padding: '16px 24px', fontSize: '14px', color: '#334155', verticalAlign: 'middle' },
+  th: { padding: '14px 20px', fontSize: '12px', color: '#475569', fontWeight: 600 },
+  td: { padding: '16px 20px', fontSize: '14px', color: '#334155', verticalAlign: 'middle' },
   badgeBtn: { color: 'white', border: 'none', padding: '8px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }
 };
